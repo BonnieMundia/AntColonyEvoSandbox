@@ -45,6 +45,8 @@ nonisolated struct AntAgent: Sendable, Equatable, Identifiable {
 nonisolated struct AntColonySnapshot: Sendable, Equatable {
     let ants: [AntAgent]
     let totalFoodCollected: Int
+    let completedTrips: Int
+    let totalCompletedPathLength: Float
     let tick: Int
 }
 
@@ -89,6 +91,8 @@ actor AntColonyEngine {
     private var random: SplitMix64
     private var ants: [AntAgent]
     private var totalFoodCollected = 0
+    private var completedTrips = 0
+    private var totalCompletedPathLength: Float = 0
     private var tick = 0
 
     init(
@@ -97,7 +101,7 @@ actor AntColonyEngine {
         food: GridCoordinate,
         population: Int,
         chromosome: AntChromosome = .baseline,
-        memoryCapacity: Int = 48,
+        memoryCapacity: Int = 512,
         randomSeed: UInt64 = 0xAC0_2026
     ) {
         precondition(population > 0, "Population must be positive.")
@@ -129,6 +133,8 @@ actor AntColonyEngine {
         AntColonySnapshot(
             ants: ants,
             totalFoodCollected: totalFoodCollected,
+            completedTrips: completedTrips,
+            totalCompletedPathLength: totalCompletedPathLength,
             tick: tick
         )
     }
@@ -191,8 +197,11 @@ actor AntColonyEngine {
         await grid.deposit(trailStrength, at: ants[index].coordinate)
 
         if ants[index].coordinate == nest {
+            let roundTripLength = Float(max(0, ants[index].pathMemory.count - 1) * 2)
             ants[index].collectedFood += 1
             totalFoodCollected += 1
+            completedTrips += 1
+            totalCompletedPathLength += roundTripLength
             ants[index].state = .searchingForFood
             ants[index].pathMemory = [nest]
             return
