@@ -85,12 +85,14 @@ nonisolated struct GridSample: Sendable {
 nonisolated struct PheromoneSnapshot: Equatable, Sendable {
     let dimensions: GridDimensions
     let values: [Float]
+    let cells: [GridCell]
     let iteration: Int
 
     static func empty(dimensions: GridDimensions) -> PheromoneSnapshot {
         PheromoneSnapshot(
             dimensions: dimensions,
             values: Array(repeating: 0, count: dimensions.cellCount),
+            cells: Array(repeating: .empty, count: dimensions.cellCount),
             iteration: 0
         )
     }
@@ -195,6 +197,7 @@ actor GridSystem {
         PheromoneSnapshot(
             dimensions: dimensions,
             values: pheromones,
+            cells: topology.cells,
             iteration: iteration
         )
     }
